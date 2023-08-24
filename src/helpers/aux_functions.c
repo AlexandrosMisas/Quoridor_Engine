@@ -198,23 +198,33 @@ static int evaluate(State *state, player_t maximizer) {
 	int sum = w_1 * (op_dist - my_dist) + w_2 * (max.walls - min.walls) + 1;
 
 	if (my_dist + state->board_size / 2 <= op_dist &&
-		max.walls > 0 && my_dist < state->board_size / 4)
-		sum += op_dist << 2;
-	else
-		sum -= my_dist;
+		max.walls > 0 && my_dist < state->board_size / 4) {
+		sum += op_dist / (state->board_size / 2);
+	} else {
+		if (maximizer == WHITE) {
+			sum -= my_dist;
+		} else {
+			sum -= state->max_walls > state->board_size
+				? my_dist < op_dist ? my_dist * state->board_size
+				                    : my_dist / state->board_size
+				: my_dist / state->board_size;
+		}	
+	}	
 
-	if (op_dist <= 2 && max.walls > 0)
-		sum += (op_dist - my_dist) > 0
-			? -4 * my_dist
-			: (op_dist - my_dist) * 4;
+	if (op_dist <= 2 && max.walls > 0 && my_dist >= op_dist)
+		sum += (op_dist - state->board_size) * (state->board_size / 2);  
 
 	if (0 < max.walls && max.walls <= 2)
-		sum += (op_dist - my_dist) * 4;
+		sum += (op_dist - my_dist) * (state->board_size / 3);
 
-	if (min.walls == 0 && my_dist < op_dist / 2)
+	if (min.walls == 0 && max.walls >= 0)
 		sum += maximizer == WHITE
-			? -3 * state->white.pos.x
-			: state->black.pos.x;
+			? state->board_size - my_dist
+			: (state->black.pos.x - 
+				state->board_size * state->board_size) / state->board_size;
+
+	if (max.walls == 0)
+		sum -= 4 * my_dist + 1;
 
 	
 	return sum;
