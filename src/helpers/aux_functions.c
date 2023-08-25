@@ -108,8 +108,8 @@ bool is_valid_wall(State *state, Move move) {
 
     execute_action(state, &move);
 
-    bool result = path_exists(state, WHITE, NULL, 0) && 
-				  path_exists(state, BLACK, NULL, 2 * state->board_size - 2);
+    bool result = path_exists(state, WHITE, NULL, state->white.win) && 
+				  path_exists(state, BLACK, NULL, state->black.win);
 
     undo_action(state, &move);
 

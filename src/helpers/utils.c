@@ -45,6 +45,8 @@ State *state_create(uint32_t size) {
     state->history = vector_create(free);
     state->board_size = size;
     state->max_walls = (float)7 / 4 * size - (float)23 / 4;
+    state->white.win = 0;
+    state->black.win = 2 * size - 2;
 
     state->board = malloc(sizeof(char*) * (2 * size - 1));
     for (size_t i = 0UL; i < 2 * size - 1; ++i)
@@ -147,8 +149,8 @@ uint32_t man_dist(Position a, Position b) {
 }
 
 bool is_terminal_state(State *state) {
-    return state->white.pos.x == 0 
-        || state->black.pos.x == 2 * state->board_size - 2;
+    return state->white.pos.x == state->white.win 
+        || state->black.pos.x == state->black.win;
 }
 
 

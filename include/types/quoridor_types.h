@@ -24,6 +24,7 @@ typedef struct {
 typedef struct {
     Position pos;
     uint32_t walls;
+    uint32_t win;
 } Player;
 
 typedef struct {

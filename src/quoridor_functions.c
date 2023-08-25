@@ -104,6 +104,7 @@ void boardsize(State *state, const char *size) {
 
 
     state->board_size = size_;
+    state->black.win = 2 * size_ - 2;
     state->max_walls = (float)7 / 4 * size_ - (float)23 / 4;
     state->board = malloc(sizeof(char*) * (2 * state->board_size - 1));
     for (size_t i = 0UL; i < 2 * state->board_size - 1UL; ++i)
@@ -357,8 +358,8 @@ void genmove(State *state, char *player) {
     for (size_t i = 0UL; i < vector_size(vec); ++i) {
         Move *move = vector_get(vec, i);
 
-        if ((player_ == WHITE && move->pos.x == 0)
-         || (player_ == BLACK && move->pos.x == 2 * state->board_size - 2)) {
+        if ((player_ == WHITE && move->pos.x == state->white.win)
+         || (player_ == BLACK && move->pos.x == state->black.win)) {
             memcpy(&best_move, move, sizeof(Move));
             goto finalize;
         }
