@@ -12,7 +12,7 @@ const char *commands[] = {
 
 
 int main(void) {
-    State *state = state_create(INITIAL_BOARDSIZE);
+    struct state *state = state_create(INITIAL_BOARDSIZE);
 
     char *line = NULL;
     while ((read_line(&line, stdin), strcmp(line, "quit"))) {

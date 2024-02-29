@@ -5,8 +5,8 @@
 #include "utils.h"
 
 #define TIME_LIMIT 4500
-#define MAX_DEPTH 8
-#define ABORT (INT_MAX / 4)
+#define MAX_DEPTH  8
+#define ABORT     (INT_MAX / 4)
 
 
 #define TIME_OUT(start) ({							\
@@ -30,15 +30,15 @@
 
 
 
-bool is_valid_move(State *state, Position new, Position old, player_t player);
+bool is_valid_move(struct state *state, struct point new, struct point old, enum player_t player);
 
-Vector *get_legal_moves(State *state, player_t player, bool get_walls);
+Vector *get_legal_moves(struct state *state, enum player_t player, bool get_walls);
 
-bool is_valid_wall(State *state, Move move);
+bool is_valid_wall(struct state *state, struct move move);
 
-bool path_exists(State *state, player_t player, uint32_t *min_steps, uint32_t target);
+bool path_exists(struct state *state, enum player_t player, uint32_t *min_steps, uint32_t target);
 
-Move decide_move(State *state, player_t player);
+struct move decide_move(struct state *state, enum player_t player);
 
 
 #endif /* AUX_FUNCTIONS_H */

@@ -36,7 +36,7 @@ void list_commands(const char **commands, uint32_t size) {
 }
 
 
-void walls(State *state, const char *num) {
+void walls(struct state *state, const char *num) {
     if (num == NULL) {
         printf("? Error! The number of walls was not given\n"
             "Usage: walls < number of walls to be set > \n");
@@ -56,7 +56,7 @@ void walls(State *state, const char *num) {
 }
 
 
-void undo(State *state, const char *times) {
+void undo(struct state *state, const char *times) {
     uint32_t times_;
     if (times != NULL && !is_valid_number(times, &times_)) {
         printf("? Error! Not a proper arithmetic constant was given\n");
@@ -74,7 +74,7 @@ void undo(State *state, const char *times) {
 
     uint32_t index = vector_size(state->history);    
     for (uint32_t i = 0; i < times_; ++i, --index) {
-        Move *move = vector_get(state->history, index - 1);
+        struct move *move = vector_get(state->history, index - 1);
         undo_action(state, move);
         vector_delete(state->history, index - 1);
     }
@@ -83,7 +83,7 @@ void undo(State *state, const char *times) {
 }
 
 
-void boardsize(State *state, const char *size) {
+void boardsize(struct state *state, const char *size) {
     if (size == NULL) {
         printf("? Error! The new size of the board was not given\n"
             "Usage: boardsize < size of the new board >\n");
@@ -115,7 +115,7 @@ void boardsize(State *state, const char *size) {
 }
 
 
-void showboard(State *state) {
+void showboard(struct state *state) {
     printf("=\n\n");
     fflush(stdout);
     PRINT_CHAR(2, ' ');
@@ -190,7 +190,7 @@ void showboard(State *state) {
 }
 
 
-void playmove(State *state, char *player, char *pos) {
+void playmove(struct state *state, char *player, char *pos) {
     if (state->winner != NONE) {
         printf("A player has already won. Start a new game\n\n");
         fflush(stdout);
@@ -220,28 +220,29 @@ void playmove(State *state, char *player, char *pos) {
 
     if (col <= 0 || col > state->board_size || pos[0] < 'a' 
      || pos[0] >= 'a' + state->board_size) {
-        printf("? Error! Move is out of bounds\n\n");
+        printf("? Error! struct move is out of bounds\n\n");
         fflush(stdout);
         return;
     }
 
-    Position new = { 
+    struct point new = { 
 		.x = 2 * (state->board_size - col), 
 		.y = 2 * (pos[0] - 'a') 
 	};
 	
-    player_t player_ = player[0] == 'b' ? BLACK : WHITE;
-    Position old = player_ == BLACK ? state->black.pos : state->white.pos;
+
+    enum player_t player_ = player[0] == 'b' ? BLACK : WHITE;
+    struct point old = player_ == BLACK ? state->black.pos : state->white.pos;
     if (!is_valid_move(state, new, old, player_)) {
         printf("? Illegal move\n\n");
         fflush(stdout);
         return;
     }
 
-    execute_action(state, create_move((Move){ 
+    execute_action(state, create_move((struct move){ 
         .move = PAWN_MOVE, .player = player_, .pos = new }));
     
-    vector_insert(state->history, create_move((Move){ 
+    vector_insert(state->history, create_move((struct move){ 
         .move = PAWN_MOVE, .player = player_, .pos = old }));
 
     if (is_terminal_state(state))
@@ -253,7 +254,7 @@ void playmove(State *state, char *player, char *pos) {
 }
 
 
-void playwall(State *state, char *player, char *pos, char *wall_type) {
+void playwall(struct state *state, char *player, char *pos, char *wall_type) {
     if (state->winner != NONE) {
         printf("A player has already won. Start a new game\n\n");
         fflush(stdout);
@@ -302,21 +303,21 @@ void playwall(State *state, char *player, char *pos, char *wall_type) {
     
     if (col <= 1 || col > state->board_size || pos[0] < 'a' 
      || pos[0] >= state->board_size + 'a' - 1) {
-        printf("Error! Move is out of bounds\n\n");
+        printf("Error! struct move is out of bounds\n\n");
         fflush(stdout);
         return;
     }
 
     
-    move_t move_ = wall_type[0] == 'h' ? HOR_WALL : VER_WALL;
-    Position pos_ = {
+    enum move_t move_ = wall_type[0] == 'h' ? HOR_WALL : VER_WALL;
+    struct point pos_ = {
         .x = 2 * (state->board_size - col) + (move_ == HOR_WALL),
         .y = 2 * (pos[0] - 'a') + (move_ != HOR_WALL)
     };
 
     
-    player_t player_ = player[0] == 'w' ? WHITE : BLACK;
-    Move move = { .move = move_, .player = player_, .pos = pos_ };
+    enum player_t player_ = player[0] == 'w' ? WHITE : BLACK;
+    struct move move = { .move = move_, .player = player_, .pos = pos_ };
     if (!is_valid_wall(state, move)) {
         printf("? Cannot place wall\n\n");
         fflush(stdout);
@@ -331,7 +332,7 @@ void playwall(State *state, char *player, char *pos, char *wall_type) {
 }
 
 
-void genmove(State *state, char *player) {
+void genmove(struct state *state, char *player) {
     if (state->winner != NONE) {
         printf("A player has already won. Start a new game\n\n");
         fflush(stdout);
@@ -352,15 +353,15 @@ void genmove(State *state, char *player) {
         return;
     }
 
-    Move best_move;
-    player_t player_ = player[0] == 'b' ? BLACK : WHITE;
+    struct move best_move;
+    enum player_t player_ = player[0] == 'b' ? BLACK : WHITE;
     Vector *vec = get_legal_moves(state, player_, false);
     for (size_t i = 0UL; i < vector_size(vec); ++i) {
-        Move *move = vector_get(vec, i);
+        struct move *move = vector_get(vec, i);
 
         if ((player_ == WHITE && move->pos.x == state->white.win)
          || (player_ == BLACK && move->pos.x == state->black.win)) {
-            memcpy(&best_move, move, sizeof(Move));
+            memcpy(&best_move, move, sizeof(struct move));
             goto finalize;
         }
     }
@@ -369,11 +370,11 @@ void genmove(State *state, char *player) {
 
     finalize: {
         execute_action(state, &best_move);
-        Position pos = best_move.move == PAWN_MOVE
+        struct point pos = best_move.move == PAWN_MOVE
             ? (player_ == BLACK ? state->black.pos : state->white.pos)
             : best_move.pos; 
 
-        vector_insert(state->history, create_move((Move){
+        vector_insert(state->history, create_move((struct move){
             .player = player_, .move = best_move.move, .pos = pos}));
         
         if (is_terminal_state(state))
