@@ -10,14 +10,12 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/time.h>
 #include <assert.h>
 
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-
-typedef void (*Destructor)(void *a);
-typedef int  (*Comperator)(void *a, void *b);
 
 
 #endif /* COMMON_TYPES_H */

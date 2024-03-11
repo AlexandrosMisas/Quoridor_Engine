@@ -9,8 +9,6 @@ void list_commands(const char **commands, uint32_t size);
 
 void showboard(struct state *state);
 
-void clear_board(struct state *state);
-
 void boardsize(struct state *state, const char *size);
 
 void walls(struct state *state, const char *num);

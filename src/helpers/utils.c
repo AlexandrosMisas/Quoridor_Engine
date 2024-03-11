@@ -17,7 +17,6 @@ void read_line(char **line, FILE *stream) {
             cap *= 2;
             *line = realloc(*line, cap * sizeof(char));
         }
-
         (*line)[index++] = iscntrl(ch) ? ' ' : tolower(ch);
     }
     (*line)[index] = '\0';
@@ -42,7 +41,7 @@ void initialize_board(struct state *state) {
 
 struct state *state_create(uint32_t size) {
     struct state *state = calloc(1, sizeof(*state));
-    state->history = vector_create(free);
+    state->history = vector_create(struct move, VEC_MIN_CAP, NULL);
     state->board_size = size;
     state->max_walls = (float)7 / 4 * size - (float)23 / 4;
     state->white.win = 0;
@@ -68,53 +67,47 @@ void state_destroy(struct state *state) {
 }
 
 
-void execute_action(struct state *state, struct move *move) {
-    struct player *_player = move->player == BLACK
+void execute_action(struct state *state, struct move move) {
+    struct player *_player = move.player == BLACK
         ? &state->black
         : &state->white;
 
-    if (move->move == PAWN_MOVE) {
-        state->board[move->pos.x][move->pos.y] = move->player == BLACK ? 'B' : 'W';
+    if (move.move == PAWN_MOVE) {
+        state->board[move.pos.x][move.pos.y] = move.player == BLACK ? 'B' : 'W';
         state->board[_player->pos.x][_player->pos.y] = ' ';
-        memcpy(&_player->pos, &move->pos, sizeof(struct point));
+        memcpy(&_player->pos, &move.pos, sizeof(struct point));
     } else {
-        if (move->move == VER_WALL)
+        if (move.move == VER_WALL)
             for (size_t i = 0UL; i < 3; ++i)
-                state->board[move->pos.x + i][move->pos.y] = 'H';
+                state->board[move.pos.x + i][move.pos.y] = 'H';
         else
             for (size_t i = 0UL; i < 3; ++i)
-                state->board[move->pos.x][move->pos.y + i] = '=';
+                state->board[move.pos.x][move.pos.y + i] = '=';
         
         _player->walls--;
     }
 }
 
 
-void undo_action(struct state *state, struct move *move) {
-    struct player *_player = move->player == BLACK
+void undo_action(struct state *state, struct move move) {
+    struct player *_player = move.player == BLACK
         ? &state->black
         : &state->white;
 
-    if (move->move == PAWN_MOVE) {
+    if (move.move == PAWN_MOVE) {
         state->board[_player->pos.x][_player->pos.y] = ' ';
-        state->board[move->pos.x][move->pos.y] = move->player == BLACK ? 'B' : 'W';
-        memcpy(&_player->pos, &move->pos, sizeof(struct point));
+        state->board[move.pos.x][move.pos.y] = move.player == BLACK ? 'B' : 'W';
+        memcpy(&_player->pos, &move.pos, sizeof(struct point));
     } else {
-        if (move->move == VER_WALL)
+        if (move.move == VER_WALL)
             for (size_t i = 0UL; i < 3; ++i)
-                state->board[move->pos.x + i][move->pos.y] = ' ';
+                state->board[move.pos.x + i][move.pos.y] = ' ';
         else 
             for (size_t i = 0UL; i < 3; ++i)
-                state->board[move->pos.x][move->pos.y + i] = ' ';
+                state->board[move.pos.x][move.pos.y + i] = ' ';
         
         _player->walls++;
     }
-}
-
-
-struct move *create_move(struct move move) {
-    struct move *move_ = malloc(sizeof(*move_));
-    return memcpy(move_, &move, sizeof(struct move));
 }
 
 
@@ -148,6 +141,7 @@ uint32_t man_dist(struct point a, struct point b) {
     return abs(a.x - b.x) + abs(a.y - b.y);
 }
 
+
 bool is_terminal_state(struct state *state) {
     return state->white.pos.x == state->white.win 
         || state->black.pos.x == state->black.win;
@@ -160,6 +154,7 @@ int64_t current_time(void) {
         perror("gettimeofday");
         exit(EXIT_FAILURE);
     }
+    
     return (int64_t)(time.tv_sec) * 1000 + 
            (int64_t)(time.tv_usec / 1000);
 }

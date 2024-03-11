@@ -32,7 +32,7 @@
 
 bool is_valid_move(struct state *state, struct point new, struct point old, enum player_t player);
 
-Vector *get_legal_moves(struct state *state, enum player_t player, bool get_walls);
+struct move *get_legal_moves(struct state *state, enum player_t player, bool get_walls);
 
 bool is_valid_wall(struct state *state, struct move move);
 

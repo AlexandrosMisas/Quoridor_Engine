@@ -46,11 +46,10 @@ struct state {
     uint32_t board_size;
     uint32_t max_walls;
     enum player_t winner;
-    Vector *history;
+    struct move *history;
     struct player white;
     struct player black;
 };
 
 
 #endif /* QUORIDOR_TYPES_H */
-

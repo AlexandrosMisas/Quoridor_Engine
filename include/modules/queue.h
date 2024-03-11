@@ -1,26 +1,35 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include "common_types.h"
+#include "vector.h"
 
-typedef struct queue Queue;
-typedef struct queue_node QueueNode;
 
-Queue *queue_create(Destructor destr_func);
+#define queue_create(type, __destructor) \
+    vector_create(type, VEC_MIN_CAP, __destructor)
 
-uint32_t queue_size(Queue *queue);
 
-void queue_insert(Queue *queue, void *value);
+#define queue_destroy(__queue) \
+    vector_destroy(__queue)
 
-void queue_delete(Queue *queue);
 
-QueueNode *queue_head(Queue *queue);
+#define queue_size(__queue) \
+    vector_size(__queue)
 
-QueueNode *queue_next(QueueNode *node);
 
-void *queue_value(QueueNode *node);
+#define queue_head(__queue) \
+    (__queue)[0]
 
-void queue_destroy(Queue *queue);
+
+#define queue_insert(__queue, __entry) \
+    vector_insert(__queue, __entry)
+
+
+#define queue_delete(__queue) \
+    vector_delete(__queue, 0)
+
+
+#define queue_back(__queue) \
+    (__queue)[(vector_size(__queue)) - 1]
 
 
 #endif /* QUEUE_H */

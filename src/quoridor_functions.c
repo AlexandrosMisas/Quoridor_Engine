@@ -5,6 +5,7 @@
 #define PRINT_CHAR(times, ch) for (int k = 0; k < (times); ++k) putchar((ch))
 
 
+
 void known_command(const char **commands, uint32_t size, char *search) {
     if (search == NULL) {
         printf("? Error! No command was given\n"
@@ -74,8 +75,7 @@ void undo(struct state *state, const char *times) {
 
     uint32_t index = vector_size(state->history);    
     for (uint32_t i = 0; i < times_; ++i, --index) {
-        struct move *move = vector_get(state->history, index - 1);
-        undo_action(state, move);
+        undo_action(state, state->history[index - 1]);
         vector_delete(state->history, index - 1);
     }
     printf("= \n\n");
@@ -239,11 +239,14 @@ void playmove(struct state *state, char *player, char *pos) {
         return;
     }
 
-    execute_action(state, create_move((struct move){ 
-        .move = PAWN_MOVE, .player = player_, .pos = new }));
+
+    execute_action(state, (struct move){ .move = PAWN_MOVE, 
+                                         .player = player_, 
+                                         .pos = new });
     
-    vector_insert(state->history, create_move((struct move){ 
-        .move = PAWN_MOVE, .player = player_, .pos = old }));
+    vector_insert(state->history, ((struct move){ .move = PAWN_MOVE, 
+                                                  .player = player_, 
+                                                  .pos = old }));
 
     if (is_terminal_state(state))
         state->winner = player_;
@@ -324,8 +327,8 @@ void playwall(struct state *state, char *player, char *pos, char *wall_type) {
         return;
     }
 	
-    execute_action(state, &move);
-    vector_insert(state->history, create_move(move));
+    execute_action(state, move);
+    vector_insert(state->history, move);
 
     printf("= \n\n");
     fflush(stdout);
@@ -355,13 +358,11 @@ void genmove(struct state *state, char *player) {
 
     struct move best_move;
     enum player_t player_ = player[0] == 'b' ? BLACK : WHITE;
-    Vector *vec = get_legal_moves(state, player_, false);
+    struct move *vec = get_legal_moves(state, player_, false);
     for (size_t i = 0UL; i < vector_size(vec); ++i) {
-        struct move *move = vector_get(vec, i);
-
-        if ((player_ == WHITE && move->pos.x == state->white.win)
-         || (player_ == BLACK && move->pos.x == state->black.win)) {
-            memcpy(&best_move, move, sizeof(struct move));
+        if ((player_ == WHITE && vec[i].pos.x == state->white.win)
+         || (player_ == BLACK && vec[i].pos.x == state->black.win)) {
+            memcpy(&best_move, &vec[i], sizeof(struct move));
             goto finalize;
         }
     }
@@ -369,13 +370,14 @@ void genmove(struct state *state, char *player) {
     best_move = decide_move(state, player_);
 
     finalize: {
-        execute_action(state, &best_move);
+        execute_action(state, best_move);
         struct point pos = best_move.move == PAWN_MOVE
             ? (player_ == BLACK ? state->black.pos : state->white.pos)
             : best_move.pos; 
 
-        vector_insert(state->history, create_move((struct move){
-            .player = player_, .move = best_move.move, .pos = pos}));
+        vector_insert(state->history, ((struct move){.player = player_, 
+                                                     .move = best_move.move, 
+                                                     .pos = pos}));
         
         if (is_terminal_state(state))
             state->winner = player_;

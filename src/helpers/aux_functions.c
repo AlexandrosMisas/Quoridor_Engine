@@ -1,5 +1,6 @@
 #include "aux_functions.h"
 #include "queue.h"
+#include "bitset.h"
 
 
 struct search_args {
@@ -22,47 +23,47 @@ bool path_exists(struct state *state, enum player_t player, uint32_t *min_steps,
     char op = player == WHITE ? 'B' : 'W';
     int dx[] = { -2, 2, 0, 0, -4, 4, 0, 0, -2, -2, 2, 2 };
     int dy[] = { 0, 0, -2, 2, 0, 0, -4, 4, 2, -2, 2, -2 };
-    struct move *move;
+    struct move move;
 
 
-    Queue *moves = queue_create(free);
-    bool **visited = malloc(sizeof(bool*) * (2 * state->board_size - 1));
+    struct move *moves =  queue_create(struct move, NULL);
+    uint8_t **visited = malloc(sizeof(uint8_t*) * (2 * state->board_size - 1));
     for (size_t i = 0UL; i < 2 * state->board_size - 1UL; ++i)
-        visited[i] = calloc(2 * state->board_size - 1, sizeof(bool));
+        visited[i] = bitset_create(2 * state->board_size - 1);
 
-    queue_insert(moves, create_move((struct move){.move = PAWN_MOVE, 
-                                                  .player = player, 
-                                                  .pos = pos, 
-                                                  .value = 0 }));
-    visited[pos.x][pos.y] = true;
+    queue_insert(moves, ((struct move){.move = PAWN_MOVE, 
+                                       .player = player, 
+                                       .pos = pos, 
+                                       .value = 0 }));
+    bitset_set(visited[pos.x], pos.y);
     while (queue_size(moves) > 0) {
-        move = queue_value(queue_head(moves));
-		if (move->pos.x == target)
+        move = queue_head(moves);
+		if (move.pos.x == target)
 			break;
         
         for (size_t i = 0UL; i < ARRAY_SIZE(dx); ++i) {
-            int x = move->pos.x + dx[i];
-            int y = move->pos.y + dy[i];
+            int x = move.pos.x + dx[i];
+            int y = move.pos.y + dy[i];
 
             if (!is_valid_coord((struct point){x, y}, state->board_size)) 
 				continue;
-            if (visited[x][y]) 
+            if (bitset_check(visited[x], y)) 
 				continue;
 
-            if (is_valid_move(state, (struct point){ .x = x, .y = y }, move->pos, player)) {
-                visited[x][y] = true;
-                queue_insert(moves, create_move((struct move){ .move = PAWN_MOVE, 
-                                                               .player = player, 
-                                                               .pos = {.x = x, .y = y}, 
-                                                               .value  = move->value + 1 }));
+            if (is_valid_move(state, (struct point){ .x = x, .y = y }, move.pos, player)) {
+                bitset_set(visited[x], y);
+                queue_insert(moves, ((struct move){ .move = PAWN_MOVE, 
+                                                    .player = player, 
+                                                    .pos = {.x = x, .y = y}, 
+                                                    .value  = move.value + 1 }));
             } else if (0UL <= i && i < 4UL && state->board[x][y] == op) { 
                 state->board[x][y] = ' ';
-                if (is_valid_move(state, (struct point){ .x = x, .y = y }, move->pos, player)) {
-                    visited[x][y] = true;
-                    queue_insert(moves, create_move((struct move){ .move = PAWN_MOVE, 
-                                                                   .player = player, 
-                                                                   .pos = {.x = x, .y = y}, 
-                                                                   .value  = move->value + 1 }));
+                if (is_valid_move(state, (struct point){ .x = x, .y = y }, move.pos, player)) {
+                    bitset_set(visited[x], y);
+                    queue_insert(moves, ((struct move){ .move = PAWN_MOVE, 
+                                                        .player = player, 
+                                                        .pos = {.x = x, .y = y}, 
+                                                        .value  = move.value + 1 }));
                 }
                 state->board[x][y] = op;
             }
@@ -70,16 +71,16 @@ bool path_exists(struct state *state, enum player_t player, uint32_t *min_steps,
         queue_delete(moves);
     }
 
-	bool result = move->pos.x == target;
-    if (result && min_steps != NULL)
-        *min_steps = move->value;
+
+    if (move.pos.x == target && min_steps != NULL)
+        *min_steps = move.value;
 
     for (size_t i = 0UL; i < 2 * state->board_size - 1UL; ++i)
-        free(visited[i]);
+        bitset_destroy(visited[i]);
     free(visited);
     queue_destroy(moves);
 
-    return result;
+    return move.pos.x == target;
 }
 
 
@@ -107,19 +108,19 @@ bool is_valid_wall(struct state *state, struct move move) {
             return false;
     }
 
-    execute_action(state, &move);
+    execute_action(state, move);
 
     bool result = path_exists(state, WHITE, NULL, state->white.win) && 
 				  path_exists(state, BLACK, NULL, state->black.win);
 
-    undo_action(state, &move);
+    undo_action(state, move);
 
     return result;
 }
 
 
-Vector *get_legal_moves(struct state *state, enum player_t player, bool get_walls) {
-    Vector *vec = vector_create(free);
+struct move *get_legal_moves(struct state *state, enum player_t player, bool get_walls) {
+    struct move *vec = vector_create(struct move, VEC_MIN_CAP, NULL);
     int dx[] = { -2, 2, 0, 0, -4, 4, 0, 0, -2, -2, 2, 2 };
     int dy[] = { 0, 0, -2, 2, 0, 0, -4, 4, 2, -2, 2, -2 };
     struct player player_ = player == BLACK ? state->black : state->white;
@@ -131,9 +132,9 @@ Vector *get_legal_moves(struct state *state, enum player_t player, bool get_wall
 
         if (is_valid_coord((struct point){x, y}, state->board_size)
          && is_valid_move(state, (struct point){x, y}, player_.pos, player))
-            vector_insert(vec, create_move((struct move){ .move = PAWN_MOVE, 
-				                                          .player = player,
-                                                          .pos = (struct point){x, y} }));
+            vector_insert(vec, ((struct move){ .move = PAWN_MOVE, 
+				                               .player = player,
+                                               .pos = (struct point){x, y} }));
     }
 
 
@@ -144,7 +145,7 @@ Vector *get_legal_moves(struct state *state, enum player_t player, bool get_wall
         for (size_t j = 1UL; j <= 2UL * state->board_size - 3UL; j += 2UL) {
             struct move move = { .move = VER_WALL, .player = player, .pos = { .x = i, .y = j } };
             if (is_valid_wall(state, move))
-                vector_insert(vec, create_move(move));
+                vector_insert(vec, move);
         }
     }
         
@@ -152,7 +153,7 @@ Vector *get_legal_moves(struct state *state, enum player_t player, bool get_wall
         for (size_t j = 0UL; j <= 2UL * state->board_size - 4UL; j += 2UL) {
             struct move move = { .move = HOR_WALL, .player = player, .pos = { .x = i, .y = j } };
             if (is_valid_wall(state, move))
-                vector_insert(vec, create_move(move));
+                vector_insert(vec, move);
         }
     }
     return vec;
@@ -162,7 +163,7 @@ Vector *get_legal_moves(struct state *state, enum player_t player, bool get_wall
 struct move decide_move(struct state *state, enum player_t player) {
     struct move best_move;
     int64_t start = current_time();
-    for (uint32_t depth = 1; (depth <= MAX_DEPTH && !TIME_OUT(start)); depth++) {
+    for (uint32_t depth = 1; (depth <= MAX_DEPTH && !TIME_OUT(start)); ++depth) {
         struct move temp = minimax(state, start, player, (struct search_args){ .alpha = INT_MIN, 
                                                                                .beta = INT_MAX,
                                                                                .depth = depth,
@@ -170,7 +171,6 @@ struct move decide_move(struct state *state, enum player_t player) {
                                                                                .player = player });
 		if (temp.value != ABORT)
 			memcpy(&best_move, &temp, sizeof(struct move));
-
     }
     return best_move;
 }
@@ -189,7 +189,8 @@ static int evaluate(struct state *state, enum player_t maximizer) {
 	struct player min = maximizer == WHITE ? state->black : state->white;
 
 	
-	uint32_t my_dist, op_dist;
+	uint32_t my_dist;
+    uint32_t op_dist;
     (void)path_exists(state, maximizer, &my_dist,
                       maximizer == WHITE ? 0 : 2 * state->board_size - 2);
 	
@@ -245,15 +246,14 @@ static struct move minimax(struct state *state, int64_t start,
     struct point pos = args.player == BLACK ? state->black.pos : state->white.pos; 
     struct move best_move = { .value = args.is_maximizing ? INT_MIN : INT_MAX };
     struct move temp_move = {};
-    Vector *vec = get_legal_moves(state, args.player, true);
+    struct move *vec = get_legal_moves(state, args.player, true);
     for (size_t i = 0UL; i < vector_size(vec); ++i) {
 		if (TIME_OUT(start)) {
 			temp_move.value = ABORT;
 			break;
 		}
 		
-        struct move *test = vector_get(vec, i);
-        execute_action(state, test);
+        execute_action(state, vec[i]);
 
         temp_move = minimax(state, start, maximizer, (struct search_args){ .alpha = args.alpha, 
 	                                                                       .beta = args.beta,
@@ -261,18 +261,19 @@ static struct move minimax(struct state *state, int64_t start,
                                                                            .is_maximizing = !args.is_maximizing,
                                                                            .player = next });
 		
-        undo_action(state, &(struct move){.move = test->move, .player = args.player,
-                                          .pos = test->move != PAWN_MOVE ? test->pos : pos});
+        undo_action(state, (struct move){.move = vec[i].move, 
+                                         .player = args.player,
+                                         .pos = vec[i].move != PAWN_MOVE ? vec[i].pos : pos});
 		
 		if (temp_move.value == ABORT)
 			break;
 
         if (args.is_maximizing && temp_move.value > best_move.value) {
-            memcpy(&best_move, test, sizeof(struct move));
+            memcpy(&best_move, &vec[i], sizeof(struct move));
             best_move.value = temp_move.value;
             args.alpha = MAX(args.alpha, best_move.value);
         } else if (!args.is_maximizing && temp_move.value < best_move.value) {
-            memcpy(&best_move, test, sizeof(struct move));    
+            memcpy(&best_move, &vec[i], sizeof(struct move));    
             best_move.value = temp_move.value;
             args.beta = MIN(args.beta, best_move.value);
         }

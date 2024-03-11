@@ -24,7 +24,7 @@ int main(void) {
             known_command(commands, ARRAY_SIZE(commands), 
                 strtok(NULL, " "));
         } else if (strcmp(command, "clear_board") == 0) {
-            vector_reset(state->history);
+            vector_reset(state->history, VEC_MIN_CAP);
             initialize_board(state);  
             printf("= \n\n");
         } else if (strcmp(command, "showboard") == 0) {
