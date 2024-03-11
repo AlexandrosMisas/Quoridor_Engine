@@ -12,6 +12,10 @@
     vector_destroy(__queue)
 
 
+#define queue_destroy_entries(__queue) \
+    vector_destroy_entries(__queue)
+
+
 #define queue_size(__queue) \
     vector_size(__queue)
 
@@ -26,6 +30,10 @@
 
 #define queue_delete(__queue) \
     vector_delete(__queue, 0)
+
+
+#define queue_delete_entry(__queue) \
+    vector_delete_entry(_queue, 0)
 
 
 #define queue_back(__queue) \
