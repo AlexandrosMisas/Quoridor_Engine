@@ -30,13 +30,15 @@
 
 
 
-bool is_valid_move(struct state *state, struct point new, struct point old, enum player_t player);
+bool is_valid_move(struct state *state, struct point new, 
+                   struct point old, enum player_t player);
 
 struct move *get_legal_moves(struct state *state, enum player_t player, bool get_walls);
 
 bool is_valid_wall(struct state *state, struct move move);
 
-bool path_exists(struct state *state, enum player_t player, uint32_t *min_steps, uint32_t target);
+bool path_exists(struct state *state, enum player_t player, 
+                 uint32_t *min_steps, uint32_t target);
 
 struct move decide_move(struct state *state, enum player_t player);
 

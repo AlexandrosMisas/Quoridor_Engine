@@ -287,7 +287,6 @@ static struct move minimax(struct state *state, int64_t start,
 }
 
 
-
 bool is_valid_move(struct state *state, struct point new, struct point old, enum player_t player) {
     char op = player == WHITE ? 'B' : 'W';
     struct point enem = player == WHITE ? state->black.pos : state->white.pos;

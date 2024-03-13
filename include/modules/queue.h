@@ -33,7 +33,7 @@
 
 
 #define queue_delete_entry(__queue) \
-    vector_delete_entry(_queue, 0)
+    vector_delete_entry(__queue, 0)
 
 
 #define queue_back(__queue) \
