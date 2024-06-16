@@ -26,7 +26,7 @@ bool path_exists(struct state *state, enum player_t player, uint32_t *min_steps,
     struct move move;
 
 
-    struct move *moves =  queue_create(struct move, NULL);
+    struct move *moves =  queue_create(struct move, NULL, false);
     uint8_t **visited = malloc(sizeof(uint8_t*) * (2 * state->board_size - 1));
     for (size_t i = 0UL; i < 2 * state->board_size - 1UL; ++i)
         visited[i] = bitset_create(2 * state->board_size - 1);
