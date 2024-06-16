@@ -4,16 +4,12 @@
 #include "vector.h"
 
 
-#define queue_create(type, __destructor) \
-    vector_create(type, VEC_MIN_CAP, __destructor)
+#define queue_create(type, __destructor, __is_ptr) \
+    vector_create(type, VEC_MIN_CAP, __destructor, __is_ptr)
 
 
 #define queue_destroy(__queue) \
     vector_destroy(__queue)
-
-
-#define queue_destroy_entries(__queue) \
-    vector_destroy_entries(__queue)
 
 
 #define queue_size(__queue) \
@@ -30,10 +26,6 @@
 
 #define queue_delete(__queue) \
     vector_delete(__queue, 0)
-
-
-#define queue_delete_entry(__queue) \
-    vector_delete_entry(__queue, 0)
 
 
 #define queue_back(__queue) \
