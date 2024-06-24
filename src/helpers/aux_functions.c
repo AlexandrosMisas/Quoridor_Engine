@@ -121,7 +121,7 @@ bool is_valid_wall(struct state *state, struct move move) {
 
 
 struct move *get_legal_moves(struct state *state, enum player_t player, bool get_walls) {
-    struct move *vec = vector_create(struct move, VEC_MIN_CAP, NULL);
+    struct move *vec = vector_create(struct move, VEC_MIN_CAP, NULL, false);
     int dx[] = { -2, 2, 0, 0, -4, 4, 0, 0, -2, -2, 2, 2 };
     int dy[] = { 0, 0, -2, 2, 0, 0, -4, 4, 2, -2, 2, -2 };
     struct player player_ = player == BLACK ? state->black : state->white;
