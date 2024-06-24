@@ -41,7 +41,7 @@ void initialize_board(struct state *state) {
 
 struct state *state_create(uint32_t size) {
     struct state *state = calloc(1, sizeof(*state));
-    state->history = vector_create(struct move, VEC_MIN_CAP, NULL);
+    state->history = vector_create(struct move, VEC_MIN_CAP, NULL, false);
     state->board_size = size;
     state->max_walls = (float)7 / 4 * size - (float)23 / 4;
     state->white.win = 0;
